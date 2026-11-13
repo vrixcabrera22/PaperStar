@@ -65,7 +65,15 @@ import com.paperstar.notes.ui.whenText
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Unit, onOpenPen: (Int) -> Unit) {
+fun NoteScreen(
+    repo: Repository,
+    data: AppData,
+    noteId: String,
+    onBack: () -> Unit,
+    onOpenPen: (Int) -> Unit,
+    onOpenPicture: (String) -> Unit,
+    onOpenFile: (String) -> Unit,
+) {
     val c = Paper.colors
     val note = data.note(noteId) ?: return
     val jar = data.folder(note.folderId)
@@ -161,6 +169,9 @@ fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Un
                     ) { Text("+ New page", color = c.accent, style = MaterialTheme.typography.labelMedium) }
                 }
             }
+
+            // pictures, scans and files
+            NoteAttachments(repo, note, onOpenPicture, onOpenFile)
 
             // typed text
             Box(

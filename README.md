@@ -19,6 +19,13 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - **Palm rejection:** once a stylus touches the page, fingers only move and zoom, and never draw.
   - **Lasso (#8):** draw a loop around strokes to select them. Then drag to move, drag the corner handle to resize, tap a color to recolor, or duplicate or delete.
   - Notes show small previews of their pages.
+- **Pictures, files and scans (version 0.3):** every note has **Pictures**, **Camera**, **Scan** and **File** buttons.
+  - Pictures are copied into the app and shrunk to at most 2000 px. They open full screen, with pinch to zoom and double-tap to zoom.
+  - **Remove originals from the gallery (#17):** after you add pictures, the app offers to delete the originals, and Android asks you to confirm. Needs Android 11 or newer.
+  - **Document scanner (#14):** uses Google's ML Kit scanner, which auto-crops and straightens. One page becomes a picture, and several pages become one PDF. Needs Google Play services, and it downloads a small part the first time.
+  - **Files:** attach any file. PDFs open inside the app, with tap-a-page to zoom. Word, PowerPoint and other files open in an app on the phone ("Open in…").
+  - **Share into Paper Star:** tap Share in another app (Messenger, Files, Gallery…), choose Paper Star, and pick a jar and a new or existing note. Shared text goes into the typed part.
+  - File names are searchable. Deleting a note or jar also deletes its files.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`).
@@ -28,7 +35,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 ## Still to build (in plan order)
 
 1. ~~Pen editor with lasso~~ (done in version 0.2). A possible later upgrade is the Jetpack Ink library for even lower stylus delay.
-2. Pictures and files: Photo Picker, camera, **document scanner (#14)**, PDF viewer, sharing into the app, **remove originals from the gallery (#17)**
+2. ~~Pictures, files, scanner, gallery cleanup, sharing in~~ (done in version 0.3). Still to do: a jar-wide Pictures tab.
 3. **Writing on pictures and PDFs (#11)**
 4. Fonts and **bold, italic, highlight and colour (#2)**
 5. Secret jar: PIN or fingerprint, encryption
@@ -57,6 +64,10 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `ui/home/`: jars grid, `JarArt` (drawing, drop and shake animations), search, lucky star, new jar dialog
 - `ui/jar/`: one jar's notes, tag filter, rename, recolour and delete
 - `ui/note/`: note editor (title, text, tags, checklist, pin)
+- `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
+- `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt
+- `ui/share/`: "Save to Paper Star" from other apps
+- `data/Imports.kt`: copies pictures and files into app storage
 - `ui/pen/`: pen editor (`PenScreen` handles gestures and zoom, `PenState` handles tools, lasso and undo, `PageRender` draws paper, ink and page previews)
 - `data/Ink.kt`: strokes, pages and the lasso, eraser and move/resize math (tested in `InkTest`)
 - `ui/theme/`: colours from the prototype

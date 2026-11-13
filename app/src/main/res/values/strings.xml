@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Paper Star</string>
+    <string name="share_label">Save to Paper Star</string>
 </resources>

@@ -113,6 +113,20 @@ fun NoteCard(
             }
             Text(plural(note.pages.size, "page"), style = MaterialTheme.typography.labelMedium, color = c.muted)
         }
+        if (note.pictures.isNotEmpty() || note.files.isNotEmpty()) {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                note.pictures.take(4).forEach { p ->
+                    com.paperstar.notes.ui.media.SavedPicture(java.io.File(ctx.filesDir, p.path),
+                        Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)), maxPx = 160)
+                }
+                val extra = buildList {
+                    if (note.pictures.size > 4) add("+${note.pictures.size - 4}")
+                    if (note.files.isNotEmpty()) add(plural(note.files.size, "file"))
+                }.joinToString(" · ")
+                if (extra.isNotEmpty()) Text(extra, style = MaterialTheme.typography.labelMedium, color = c.muted)
+            }
+        }
         if (note.checklist.isNotEmpty()) {
             val done = note.checklist.count { it.done }
             Text("$done of ${note.checklist.size} done", style = MaterialTheme.typography.labelMedium,
