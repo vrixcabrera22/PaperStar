@@ -1,0 +1,221 @@
+package com.paperstar.notes.ui.note
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import com.paperstar.notes.data.AppData
+import com.paperstar.notes.data.CheckItem
+import com.paperstar.notes.data.Repository
+import com.paperstar.notes.data.normalizeTag
+import com.paperstar.notes.ui.PsIcon
+import com.paperstar.notes.ui.PsIcons
+import com.paperstar.notes.ui.TagChip
+import com.paperstar.notes.ui.theme.Paper
+import com.paperstar.notes.ui.whenText
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Unit) {
+    val c = Paper.colors
+    val note = data.note(noteId) ?: return
+    val jar = data.folder(note.folderId)
+    // Local copies of the text so typing never fights with saving.
+    var title by remember(noteId) { mutableStateOf(note.title) }
+    var body by remember(noteId) { mutableStateOf(note.body) }
+    var menu by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var addingTag by remember { mutableStateOf(false) }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = onBack).padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PsIcon(PsIcons.Back, null, c.accent, Modifier.size(20.dp))
+                Text(jar?.name ?: "Back", color = c.accent, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+            }
+            Box(
+                Modifier.size(40.dp).clip(CircleShape).background(if (note.pinned) c.accentSoft else c.bg).clickable { repo.togglePin(noteId) },
+                contentAlignment = Alignment.Center,
+            ) { PsIcon(PsIcons.Pin, if (note.pinned) "Unpin note" else "Pin note to the top", if (note.pinned) c.accent else c.muted, Modifier.size(20.dp)) }
+            Box {
+                Box(Modifier.size(40.dp).clip(CircleShape).clickable { menu = true }, contentAlignment = Alignment.Center) {
+                    PsIcon(PsIcons.More, "Note options", c.ink, Modifier.size(22.dp))
+                }
+                DropdownMenu(menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Delete note", color = c.danger) }, onClick = { menu = false; confirmDelete = true })
+                }
+            }
+        }
+
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box {
+                if (title.isEmpty()) Text("Note title", style = MaterialTheme.typography.headlineMedium, color = c.muted)
+                BasicTextField(
+                    title, { title = it; repo.updateNote(noteId) { n -> n.copy(title = it) } },
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(color = c.ink),
+                    cursorBrush = SolidColor(c.accent), modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            Text(if (note.pinned) "Pinned · edited ${whenText(note.updatedAt)}" else "Edited ${whenText(note.updatedAt)}",
+                style = MaterialTheme.typography.bodySmall, color = c.muted)
+
+            // tags
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                note.tags.forEach { t -> TagChip(t, onRemove = { repo.updateNote(noteId) { n -> n.copy(tags = n.tags - t) } }) }
+                Row(
+                    Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, c.line, RoundedCornerShape(999.dp))
+                        .clickable { addingTag = true }.padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PsIcon(PsIcons.Tag, null, c.muted, Modifier.size(14.dp))
+                    Text(" Add tag", style = MaterialTheme.typography.labelMedium, color = c.muted)
+                }
+            }
+
+            // typed text
+            Box(
+                Modifier.fillMaxWidth().heightIn(min = 120.dp).clip(RoundedCornerShape(14.dp)).background(c.surface)
+                    .border(1.dp, c.line, RoundedCornerShape(14.dp)).padding(14.dp),
+            ) {
+                if (body.isEmpty()) Text("Type here…", style = MaterialTheme.typography.bodyLarge, color = c.muted)
+                BasicTextField(
+                    body, { body = it; repo.updateNote(noteId) { n -> n.copy(body = it) } },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.ink),
+                    cursorBrush = SolidColor(c.accent), modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // checklist
+            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 8.dp)) {
+                Text("Checklist", style = MaterialTheme.typography.titleMedium, color = c.ink)
+                if (note.checklist.isNotEmpty()) Text("  ${note.checklist.count { it.done }} of ${note.checklist.size} done",
+                    style = MaterialTheme.typography.bodySmall, color = c.muted)
+            }
+            note.checklist.forEach { item -> CheckRow(repo, noteId, item) }
+            Row(
+                Modifier.clip(RoundedCornerShape(10.dp)).clickable {
+                    repo.updateNote(noteId) { n -> n.copy(checklist = n.checklist + CheckItem()) }
+                }.padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PsIcon(PsIcons.Plus, null, c.accent, Modifier.size(18.dp))
+                Text(" Add item", color = c.accent, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.size(40.dp))
+        }
+    }
+
+    if (addingTag) {
+        var raw by remember { mutableStateOf("") }
+        val existing = data.notes.flatMap { it.tags }.distinct().filterNot { it in note.tags }.sorted()
+        fun add(t: String) {
+            val tag = normalizeTag(t)
+            if (tag.isNotEmpty() && tag !in note.tags) repo.updateNote(noteId) { n -> n.copy(tags = n.tags + tag) }
+            addingTag = false
+        }
+        AlertDialog(
+            onDismissRequest = { addingTag = false },
+            title = { Text("Add a tag") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(raw, { raw = it.take(30) }, singleLine = true, placeholder = { Text("e.g. exam") },
+                        prefix = { Text("#") },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { add(raw) }))
+                    if (existing.isNotEmpty()) {
+                        Text("Tags you've used", style = MaterialTheme.typography.labelMedium, color = c.muted)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            existing.forEach { t -> TagChip(t, onClick = { add(t) }) }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { add(raw) }) { Text("Add") } },
+            dismissButton = { TextButton(onClick = { addingTag = false }) { Text("Cancel") } },
+        )
+    }
+    if (confirmDelete) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text("Delete “${note.title.ifBlank { "Untitled" }}”?") },
+        text = { Text("Its star leaves the jar. This can't be undone.") },
+        confirmButton = { TextButton(onClick = { confirmDelete = false; onBack(); repo.deleteNote(noteId) }) { Text("Delete", color = c.danger) } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun CheckRow(repo: Repository, noteId: String, item: CheckItem) {
+    val c = Paper.colors
+    var text by remember(item.id) { mutableStateOf(item.text) }
+    fun change(fn: (CheckItem) -> CheckItem) = repo.updateNote(noteId) { n ->
+        n.copy(checklist = n.checklist.map { if (it.id == item.id) fn(it) else it })
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(item.done, { checked -> change { it.copy(done = checked) } },
+            colors = CheckboxDefaults.colors(checkedColor = c.accent, checkmarkColor = c.accentInk))
+        Box(Modifier.weight(1f)) {
+            if (text.isEmpty()) Text("List item", style = MaterialTheme.typography.bodyLarge, color = c.muted)
+            BasicTextField(
+                text, { text = it; change { ci -> ci.copy(text = it) } },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = if (item.done) c.muted else c.ink,
+                    textDecoration = if (item.done) TextDecoration.LineThrough else TextDecoration.None,
+                ),
+                cursorBrush = SolidColor(c.accent), singleLine = true, modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Box(
+            Modifier.size(36.dp).clip(CircleShape).clickable {
+                repo.updateNote(noteId) { n -> n.copy(checklist = n.checklist.filterNot { it.id == item.id }) }
+            },
+            contentAlignment = Alignment.Center,
+        ) { PsIcon(PsIcons.Close, "Remove item", c.muted, Modifier.size(16.dp)) }
+    }
+}
