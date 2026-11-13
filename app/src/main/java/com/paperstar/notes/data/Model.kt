@@ -33,9 +33,55 @@ data class Note(
     /** Stored lowercase, without the leading '#'. */
     val tags: List<String> = emptyList(),
     val pinned: Boolean = false,
+    /** Handwritten pages, in order. */
+    val pages: List<Page> = emptyList(),
+    val pictures: List<Picture> = emptyList(),
+    val files: List<Attachment> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )
+
+/** A picture copied into the app. [path] is relative to the app's files folder. */
+@Serializable
+data class Picture(
+    val id: String = newId(),
+    val path: String,
+    val width: Int,
+    val height: Int,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+/** Any attached file (PDF, Word, slides...), copied into the app. [path] is relative to the files folder. */
+@Serializable
+data class Attachment(
+    val id: String = newId(),
+    val name: String,
+    val mime: String,
+    val size: Long,
+    val path: String,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+enum class FileKind(val label: String) { PDF("PDF"), DOC("DOC"), SLIDES("PPT"), SHEET("XLS"), IMAGE("IMG"), TEXT("TXT"), OTHER("FILE") }
+
+fun kindOf(name: String, mime: String): FileKind {
+    val ext = name.substringAfterLast('.', "").lowercase()
+    return when {
+        mime == "application/pdf" || ext == "pdf" -> FileKind.PDF
+        ext in setOf("doc", "docx", "odt", "rtf") || mime.contains("wordprocessing") || mime == "application/msword" -> FileKind.DOC
+        ext in setOf("ppt", "pptx", "odp", "key") || mime.contains("presentation") || mime.contains("powerpoint") -> FileKind.SLIDES
+        ext in setOf("xls", "xlsx", "ods", "csv") || mime.contains("spreadsheet") || mime.contains("excel") -> FileKind.SHEET
+        mime.startsWith("image/") -> FileKind.IMAGE
+        mime.startsWith("text/") || ext in setOf("txt", "md") -> FileKind.TEXT
+        else -> FileKind.OTHER
+    }
+}
+
+fun sizeText(bytes: Long): String = when {
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+    else -> String.format(java.util.Locale.US, "%.1f MB", bytes / 1048576.0)
+}
 
 @Serializable
 data class AppData(

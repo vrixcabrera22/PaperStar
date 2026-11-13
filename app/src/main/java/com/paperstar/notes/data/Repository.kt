@@ -18,7 +18,7 @@ import java.io.File
  * private storage. Writes are debounced and atomic, so a crash mid-save can't
  * corrupt the file.
  */
-class Repository(dir: File, private val scope: CoroutineScope) {
+class Repository(private val dir: File, private val scope: CoroutineScope) {
 
     private val file = AtomicFile(File(dir, "paperstar.json"))
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -85,8 +85,17 @@ class Repository(dir: File, private val scope: CoroutineScope) {
     fun updateFolder(id: String, fn: (Folder) -> Folder) =
         edit { d -> d.copy(folders = d.folders.map { if (it.id == id) fn(it) else it }) }
 
-    fun deleteFolder(id: String) =
+    fun deleteFolder(id: String) {
+        removeFilesOf(_data.value.notes.filter { it.folderId == id })
         edit { d -> d.copy(folders = d.folders.filterNot { it.id == id }, notes = d.notes.filterNot { it.folderId == id }) }
+    }
+
+    /** Deletes the picture and attachment files that belong to these notes. */
+    private fun removeFilesOf(notes: List<Note>) {
+        val paths = notes.flatMap { n -> n.pictures.map { it.path } + n.files.map { it.path } }
+        if (paths.isEmpty()) return
+        scope.launch(Dispatchers.IO) { paths.forEach { File(dir, it).delete() } }
+    }
 
     // ---- notes ----
     fun addNote(folderId: String, title: String = ""): Note {
@@ -105,7 +114,55 @@ class Repository(dir: File, private val scope: CoroutineScope) {
         d.copy(notes = d.notes.map { if (it.id == id) it.copy(pinned = !it.pinned) else it })
     }
 
-    fun deleteNote(id: String) = edit { d -> d.copy(notes = d.notes.filterNot { it.id == id }) }
+    fun deleteNote(id: String) {
+        removeFilesOf(_data.value.notes.filter { it.id == id })
+        edit { d -> d.copy(notes = d.notes.filterNot { it.id == id }) }
+    }
+
+    // ---- pictures and files ----
+    fun addPictures(noteId: String, pics: List<Picture>) =
+        updateNote(noteId) { it.copy(pictures = it.pictures + pics) }
+
+    fun removePicture(noteId: String, picId: String) {
+        val pic = _data.value.note(noteId)?.pictures?.firstOrNull { it.id == picId } ?: return
+        updateNote(noteId) { it.copy(pictures = it.pictures.filterNot { p -> p.id == picId }) }
+        scope.launch(Dispatchers.IO) { File(dir, pic.path).delete() }
+    }
+
+    fun addFiles(noteId: String, files: List<Attachment>) =
+        updateNote(noteId) { it.copy(files = it.files + files) }
+
+    fun removeFile(noteId: String, fileId: String) {
+        val f = _data.value.note(noteId)?.files?.firstOrNull { it.id == fileId } ?: return
+        updateNote(noteId) { it.copy(files = it.files.filterNot { a -> a.id == fileId }) }
+        scope.launch(Dispatchers.IO) { File(dir, f.path).delete() }
+    }
+
+    fun fileOf(relativePath: String): File = File(dir, relativePath)
+
+    // ---- handwritten pages ----
+    /** A new note that starts with one blank page, ready for the pen. */
+    fun addPenNote(folderId: String, title: String, paper: Paper = Paper.LINED): Note {
+        val n = addNote(folderId, title)
+        updateNote(n.id) { it.copy(pages = listOf(Page(paper = paper))) }
+        return n
+    }
+
+    /** Inserts a page after [afterIndex] (or at the end) and returns its index. */
+    fun insertPage(noteId: String, afterIndex: Int, paper: Paper): Int {
+        var index = 0
+        updateNote(noteId) { n ->
+            index = (afterIndex + 1).coerceIn(0, n.pages.size)
+            n.copy(pages = n.pages.toMutableList().apply { add(index, Page(paper = paper)) })
+        }
+        return index
+    }
+
+    fun updatePage(noteId: String, pageId: String, fn: (Page) -> Page) =
+        updateNote(noteId) { n -> n.copy(pages = n.pages.map { if (it.id == pageId) fn(it) else it }) }
+
+    fun deletePage(noteId: String, pageId: String) =
+        updateNote(noteId) { n -> n.copy(pages = n.pages.filterNot { it.id == pageId }) }
 
     fun consumeDrops(folderId: String) = _drops.update { it - folderId }
 }

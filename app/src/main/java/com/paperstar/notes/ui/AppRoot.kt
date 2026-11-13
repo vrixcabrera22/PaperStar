@@ -18,12 +18,14 @@ import com.paperstar.notes.data.Repository
 import com.paperstar.notes.ui.home.HomeScreen
 import com.paperstar.notes.ui.jar.JarScreen
 import com.paperstar.notes.ui.note.NoteScreen
+import com.paperstar.notes.ui.pen.PenScreen
 import com.paperstar.notes.ui.theme.Paper
 
 sealed interface Screen {
     data object Home : Screen
     data class Jar(val id: String) : Screen
     data class Note(val id: String) : Screen
+    data class Pen(val noteId: String, val page: Int) : Screen
 }
 
 /** A tiny back stack: Home → Jar → Note. */
@@ -42,8 +44,13 @@ fun AppRoot(repo: Repository) {
         AnimatedContent(top, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { s ->
             when (s) {
                 Screen.Home -> HomeScreen(repo, data, drops, onOpenJar = { push(Screen.Jar(it)) }, onOpenNote = { push(Screen.Note(it)) })
-                is Screen.Jar -> JarScreen(repo, data, s.id, onBack = ::pop, onOpenNote = { push(Screen.Note(it)) })
-                is Screen.Note -> NoteScreen(repo, data, s.id, onBack = ::pop)
+                is Screen.Jar -> JarScreen(
+                    repo, data, s.id, onBack = ::pop, onOpenNote = { push(Screen.Note(it)) },
+                    // a pen note opens straight into the pen editor; Back returns to the note
+                    onOpenPenNote = { push(Screen.Note(it)); push(Screen.Pen(it, 0)) },
+                )
+                is Screen.Note -> NoteScreen(repo, data, s.id, onBack = ::pop, onOpenPen = { page -> push(Screen.Pen(s.id, page)) })
+                is Screen.Pen -> PenScreen(repo, data, s.noteId, s.page, onDone = ::pop)
             }
         }
     }

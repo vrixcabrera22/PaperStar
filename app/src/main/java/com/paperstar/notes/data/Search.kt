@@ -19,6 +19,7 @@ fun search(data: AppData, query: String): List<SearchHit> {
             append(n.title).append('\n').append(n.body).append('\n').append(f.name).append('\n')
             n.checklist.forEach { append(it.text).append('\n') }
             n.tags.forEach { append(it).append('\n') }
+            n.files.forEach { append(it.name).append('\n') }
         }.lowercase()
         if (terms.all { hay.contains(it) }) SearchHit(n, f) else null
     }.sortedByDescending { it.note.updatedAt }

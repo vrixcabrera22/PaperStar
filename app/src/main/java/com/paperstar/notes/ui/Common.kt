@@ -107,6 +107,12 @@ fun NoteCard(
         }
         if (bodyText.isNotBlank()) Text(highlighted(bodyText, terms, c.highlight), style = MaterialTheme.typography.bodyMedium,
             color = c.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (note.pages.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            note.pages.take(4).forEach { p ->
+                com.paperstar.notes.ui.pen.PageThumb(p, Modifier.width(40.dp).clip(RoundedCornerShape(4.dp)).border(1.dp, c.line, RoundedCornerShape(4.dp)))
+            }
+            Text(plural(note.pages.size, "page"), style = MaterialTheme.typography.labelMedium, color = c.muted)
+        }
         if (note.checklist.isNotEmpty()) {
             val done = note.checklist.count { it.done }
             Text("$done of ${note.checklist.size} done", style = MaterialTheme.typography.labelMedium,

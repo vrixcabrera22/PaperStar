@@ -56,6 +56,7 @@ fun JarScreen(
     jarId: String,
     onBack: () -> Unit,
     onOpenNote: (String) -> Unit,
+    onOpenPenNote: (String) -> Unit,
 ) {
     val c = Paper.colors
     val jar = data.folder(jarId) ?: return
@@ -117,13 +118,26 @@ fun JarScreen(
             items(shown, key = { it.id }) { n -> NoteCard(n, onClick = { onOpenNote(n.id) }) }
         }
 
-        ExtendedFloatingActionButton(
-            onClick = { onOpenNote(repo.addNote(jarId).id) },
-            icon = { PsIcon(PsIcons.Plus, null, c.accentInk, Modifier.size(20.dp)) },
-            text = { Text("New note") },
-            containerColor = c.accent, contentColor = c.accentInk,
-            modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(20.dp),
-        )
+        Row(
+            Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = { onOpenNote(repo.addNote(jarId).id) },
+                icon = { PsIcon(PsIcons.Plus, null, c.ink, Modifier.size(20.dp)) },
+                text = { Text("Note") },
+                containerColor = c.surface, contentColor = c.ink,
+            )
+            ExtendedFloatingActionButton(
+                onClick = {
+                    val date = java.text.SimpleDateFormat("MMM d", java.util.Locale.getDefault()).format(java.util.Date())
+                    onOpenPenNote(repo.addPenNote(jarId, "${jar.name} notes · $date").id)
+                },
+                icon = { PsIcon(PsIcons.Pen, null, c.accentInk, Modifier.size(20.dp)) },
+                text = { Text("Pen note") },
+                containerColor = c.accent, contentColor = c.accentInk,
+            )
+        }
     }
 
     if (editing) NewJarDialog(

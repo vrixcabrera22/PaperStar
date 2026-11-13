@@ -50,6 +50,13 @@ import com.paperstar.notes.data.AppData
 import com.paperstar.notes.data.CheckItem
 import com.paperstar.notes.data.Repository
 import com.paperstar.notes.data.normalizeTag
+import com.paperstar.notes.data.PAGE_H
+import com.paperstar.notes.data.PAGE_W
+import com.paperstar.notes.data.Paper as PaperStyle
+import com.paperstar.notes.ui.pen.PageThumb
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
 import com.paperstar.notes.ui.PsIcon
 import com.paperstar.notes.ui.PsIcons
 import com.paperstar.notes.ui.TagChip
@@ -58,7 +65,7 @@ import com.paperstar.notes.ui.whenText
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Unit) {
+fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Unit, onOpenPen: (Int) -> Unit) {
     val c = Paper.colors
     val note = data.note(noteId) ?: return
     val jar = data.folder(note.folderId)
@@ -117,6 +124,41 @@ fun NoteScreen(repo: Repository, data: AppData, noteId: String, onBack: () -> Un
                 ) {
                     PsIcon(PsIcons.Tag, null, c.muted, Modifier.size(14.dp))
                     Text(" Add tag", style = MaterialTheme.typography.labelMedium, color = c.muted)
+                }
+            }
+
+            // handwriting
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.accent)
+                    .clickable { if (note.pages.isEmpty()) onOpenPen(repo.insertPage(noteId, -1, PaperStyle.LINED)) else onOpenPen(note.pages.lastIndex) }
+                    .padding(vertical = 13.dp),
+                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PsIcon(PsIcons.Pen, null, c.accentInk, Modifier.size(20.dp))
+                Text("  Write with pen", color = c.accentInk, style = MaterialTheme.typography.titleMedium)
+            }
+            if (note.pages.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 8.dp)) {
+                    Text("Handwritten", style = MaterialTheme.typography.titleMedium, color = c.ink)
+                    Text("  ${note.pages.size} page${if (note.pages.size == 1) "" else "s"}", style = MaterialTheme.typography.bodySmall, color = c.muted)
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    note.pages.forEachIndexed { i, p ->
+                        Box(
+                            Modifier.width(96.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, c.line, RoundedCornerShape(8.dp))
+                                .clickable { onOpenPen(i) },
+                        ) {
+                            PageThumb(p, Modifier.fillMaxWidth())
+                            Text("${i + 1}", style = MaterialTheme.typography.labelMedium, color = Color(0xFF6C6882),
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(6.dp))
+                        }
+                    }
+                    Box(
+                        Modifier.width(96.dp).aspectRatio(PAGE_W / PAGE_H).clip(RoundedCornerShape(8.dp))
+                            .border(2.dp, c.accent, RoundedCornerShape(8.dp)).background(c.accentSoft)
+                            .clickable { onOpenPen(repo.insertPage(noteId, note.pages.lastIndex, note.pages.last().paper)) },
+                        contentAlignment = Alignment.Center,
+                    ) { Text("+ New page", color = c.accent, style = MaterialTheme.typography.labelMedium) }
                 }
             }
 
