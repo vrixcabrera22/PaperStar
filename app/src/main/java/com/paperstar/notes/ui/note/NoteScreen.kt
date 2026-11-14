@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
@@ -84,6 +85,28 @@ fun NoteScreen(
     val rich = remember(noteId) { RichTextState(note.body, note.marks) }
     var bodyFocused by remember { mutableStateOf(false) }
     var fontPicker by remember { mutableStateOf(false) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val download = com.paperstar.notes.ui.media.rememberDownloader()
+    var exporting by remember { mutableStateOf(false) }
+    /** Makes a PDF of the note as it is right now, then hands it to [then]. */
+    fun exportPdf(then: (java.io.File) -> Unit) {
+        val n = repo.data.value.note(noteId) ?: return
+        val jarName = repo.data.value.folder(n.folderId)?.name.orEmpty()
+        exporting = true
+        scope.launch {
+            val file = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                runCatching {
+                    val dir = java.io.File(ctx.cacheDir, "exports").apply { deleteRecursively(); mkdirs() }
+                    java.io.File(dir, com.paperstar.notes.ui.media.safeFileName(n.title.ifBlank { "Untitled note" }, ".pdf"))
+                        .also { com.paperstar.notes.export.NotePdf.write(ctx, n, jarName, it) }
+                }.onFailure { android.util.Log.w("NotePdf", "Export failed", it) }.getOrNull()
+            }
+            exporting = false
+            if (file == null) android.widget.Toast.makeText(ctx, "The PDF couldn't be made.", android.widget.Toast.LENGTH_SHORT).show()
+            else then(file)
+        }
+    }
     fun saveBody() = repo.updateNote(noteId) { n -> n.copy(body = rich.value.text, marks = rich.marks) }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -107,6 +130,19 @@ fun NoteScreen(
                     PsIcon(PsIcons.More, "Note options", c.ink, Modifier.size(22.dp))
                 }
                 DropdownMenu(menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Download as PDF") }, onClick = {
+                        menu = false
+                        exportPdf { f -> download(com.paperstar.notes.ui.media.Downloadable(f, f.name, "application/pdf")) }
+                    })
+                    DropdownMenuItem(text = { Text("Share as PDF") }, onClick = {
+                        menu = false
+                        exportPdf { f ->
+                            val uri = androidx.core.content.FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f)
+                            val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("application/pdf")
+                                .putExtra(android.content.Intent.EXTRA_STREAM, uri).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            ctx.startActivity(android.content.Intent.createChooser(send, "Share ${f.name}"))
+                        }
+                    })
                     DropdownMenuItem(text = { Text("Delete note", color = c.danger) }, onClick = { menu = false; confirmDelete = true })
                 }
             }
@@ -248,6 +284,12 @@ fun NoteScreen(
             dismissButton = { TextButton(onClick = { addingTag = false }) { Text("Cancel") } },
         )
     }
+    if (exporting) AlertDialog(onDismissRequest = {}, confirmButton = {}, text = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.CircularProgressIndicator(Modifier.size(28.dp))
+            Text("Making the PDF…", modifier = Modifier.padding(start = 16.dp))
+        }
+    })
     if (fontPicker) FontPickerDialog(
         note.font, note.textSize,
         onFont = { k -> repo.updateNote(noteId) { n -> n.copy(font = k) } },

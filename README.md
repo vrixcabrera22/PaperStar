@@ -53,6 +53,9 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - The backup is one zip with every jar, note, picture, file and pen page. **Restore from a backup…** shows how many notes it has and asks before replacing everything.
   - It uses Android's file picker and Drive app, so it needs no Google sign-in or cloud setup in Paper Star. The backup isn't password-protected, and Secret jar notes are included.
   - Android's own device backup is also on (`allowBackup`), as a second safety net.
+- **Download or share a note as a PDF:** in a note, tap ⋯ → **Download as PDF** (saved to Downloads › Paper Star) or **Share as PDF** (Messenger, Drive, Print…).
+  - The PDF has the title, jar, date and tags, the typed text in its font with bold, italic, underline, colours and highlights, the checklist, and a list of attached files.
+  - Each handwritten page follows on its own page, drawn as sharp lines rather than a screenshot. Each picture follows on its own page too.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -94,6 +97,7 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `ocr/Recognizer.kt`: reads text in pages, pictures and PDFs in the background; `data/Recognized.kt` decides what needs reading (tested in `RecognizedTest`)
 - `reminders/Reminders.kt`: alarms, the notification and restoring after a restart; `data/ReminderTimes.kt` has the labels and quick choices (tested in `ReminderTest`); `ui/note/ReminderUi.kt` has the chip and pickers
 - `backup/Backup.kt`: backing up, automatic daily backups and restoring; `data/BackupZip.kt` is the zip format (tested in `BackupTest`); `ui/backup/BackupScreen.kt` is the screen
+- `export/NotePdf.kt`: turns a note into a PDF; `data/PdfLayout.kt` has the page math (tested in `PdfLayoutTest`)
 - `data/Rich.kt`: formatting ranges and how they move while typing (tested in `RichTest`)
 - `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
 - `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt

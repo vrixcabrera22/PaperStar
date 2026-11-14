@@ -3,4 +3,5 @@
     <files-path name="attachments" path="attachments/" />
     <files-path name="pictures" path="pictures/" />
     <cache-path name="camera" path="camera/" />
+    <cache-path name="exports" path="exports/" />
 </paths>

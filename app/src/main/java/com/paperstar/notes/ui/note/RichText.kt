@@ -59,7 +59,7 @@ private val HighlightNames = listOf("Yellow", "Pink", "Green", "Blue")
 private val OnHighlight = Color(0xFF1D1A2C)
 
 /** Text colours, with a lighter version of each for dark mode. */
-private val TextColorsLight = listOf(Color(0xFFD12F4A), Color(0xFF2F62D6), Color(0xFF23884A), Color(0xFF8A3FD1), Color(0xFFD06A12))
+val TextColorsLight = listOf(Color(0xFFD12F4A), Color(0xFF2F62D6), Color(0xFF23884A), Color(0xFF8A3FD1), Color(0xFFD06A12))
 private val TextColorsDark = listOf(Color(0xFFFF8597), Color(0xFF8FB2FF), Color(0xFF7FD69B), Color(0xFFC79BFF), Color(0xFFFFAD66))
 private val TextColorNames = listOf("Red", "Blue", "Green", "Purple", "Orange")
 

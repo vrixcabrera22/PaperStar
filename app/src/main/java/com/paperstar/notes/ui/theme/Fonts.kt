@@ -14,7 +14,7 @@ import com.paperstar.notes.R
  * A font for a note's typed text. [key] is what gets saved, so never change it.
  * [scale] evens out fonts that look smaller than others at the same size (like Caveat).
  */
-data class NoteFont(val key: String, val name: String, val family: FontFamily, val scale: Float = 1f)
+data class NoteFont(val key: String, val name: String, val family: FontFamily, val scale: Float = 1f, val res: Int? = null)
 
 /** A variable font file, set to regular and bold. */
 @OptIn(ExperimentalTextApi::class)
@@ -26,14 +26,14 @@ private fun variable(res: Int) = FontFamily(
 /** The bundled free Google Fonts (#2 and the font picker). The first one is the app's normal font. */
 val NoteFonts = listOf(
     NoteFont("", "Default", FontFamily.Default),
-    NoteFont("dm_sans", "DM Sans", variable(R.font.dm_sans)),
-    NoteFont("nunito", "Nunito", variable(R.font.nunito)),
-    NoteFont("lora", "Lora", variable(R.font.lora)),
-    NoteFont("caveat", "Caveat", variable(R.font.caveat), scale = 1.3f),
-    NoteFont("patrick_hand", "Patrick Hand", FontFamily(Font(R.font.patrick_hand)), scale = 1.12f),
-    NoteFont("bricolage", "Bricolage Grotesque", variable(R.font.bricolage)),
-    NoteFont("courier", "Courier Prime", FontFamily(Font(R.font.courier_prime), Font(R.font.courier_prime_bold, FontWeight.Bold))),
-    NoteFont("comfortaa", "Comfortaa", variable(R.font.comfortaa)),
+    NoteFont("dm_sans", "DM Sans", variable(R.font.dm_sans), res = R.font.dm_sans),
+    NoteFont("nunito", "Nunito", variable(R.font.nunito), res = R.font.nunito),
+    NoteFont("lora", "Lora", variable(R.font.lora), res = R.font.lora),
+    NoteFont("caveat", "Caveat", variable(R.font.caveat), scale = 1.3f, res = R.font.caveat),
+    NoteFont("patrick_hand", "Patrick Hand", FontFamily(Font(R.font.patrick_hand)), scale = 1.12f, res = R.font.patrick_hand),
+    NoteFont("bricolage", "Bricolage Grotesque", variable(R.font.bricolage), res = R.font.bricolage),
+    NoteFont("courier", "Courier Prime", FontFamily(Font(R.font.courier_prime), Font(R.font.courier_prime_bold, FontWeight.Bold)), res = R.font.courier_prime),
+    NoteFont("comfortaa", "Comfortaa", variable(R.font.comfortaa), res = R.font.comfortaa),
 )
 
 fun noteFont(key: String): NoteFont = NoteFonts.firstOrNull { it.key == key } ?: NoteFonts.first()
