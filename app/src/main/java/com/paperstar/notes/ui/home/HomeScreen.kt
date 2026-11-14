@@ -74,6 +74,7 @@ fun HomeScreen(
     drops: Map<String, Int>,
     onOpenJar: (String) -> Unit,
     onOpenNote: (String) -> Unit,
+    onOpenBackup: () -> Unit = {},
 ) {
     val c = Paper.colors
     val haptics = LocalHapticFeedback.current
@@ -114,6 +115,10 @@ fun HomeScreen(
                     Text("Fold your notes into stars and keep them in jars.", color = c.muted, style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 6.dp))
                 }
+                Box(
+                    Modifier.padding(end = 8.dp).size(44.dp).clip(CircleShape).background(c.accentSoft).clickable(onClick = onOpenBackup),
+                    contentAlignment = Alignment.Center,
+                ) { PsIcon(PsIcons.Cloud, "Backup", c.accent, Modifier.size(22.dp)) }
                 Box(
                     Modifier.size(44.dp).clip(CircleShape).background(c.accentSoft)
                         .clickable { haptics.performHapticFeedback(HapticFeedbackType.LongPress); pullLuckyStar(jars) },

@@ -46,6 +46,12 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - Reminders come back after the phone restarts. Android asks once for permission to show notifications.
   - Notes in the Secret jar only say "A note in your Secret jar", so nothing shows on the lock screen.
   - Android may deliver a reminder up to about a minute late, unless "Alarms & reminders" is allowed for Paper Star in Settings.
+- **Backup to Google Drive (#36, version 0.9):** tap the cloud button on Home.
+  - **Back up to Google Drive** opens Android's save screen. Choose Google Drive from the ☰ menu and tap Save. After that, **Back up now** updates the same file.
+  - **Back up automatically** (on by default) updates the backup once a day when you leave the app.
+  - The backup is one zip with every jar, note, picture, file and pen page. **Restore from a backup…** shows how many notes it has and asks before replacing everything.
+  - It uses Android's file picker and Drive app, so it needs no Google sign-in or cloud setup in Paper Star. The backup isn't password-protected, and Secret jar notes are included.
+  - Android's own device backup is also on (`allowBackup`), as a second safety net.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -61,7 +67,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 5. Secret jar: PIN or fingerprint, encryption
 6. ~~Reminders (#27)~~ (done in version 0.8)
 7. ~~Searching handwriting and photos with ML Kit (#24)~~ (done in version 0.7)
-8. **Google Drive backup (#36)**, then release prep
+8. ~~Google Drive backup (#36)~~ (done in version 0.9). Next: release prep
 
 The storage may move to Room once search needs to scale and the Secret jar needs encryption.
 
@@ -86,6 +92,7 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `ui/note/`: note editor (title, text, tags, checklist, pin); `RichText.kt` has the format bar and styled text
 - `ocr/Recognizer.kt`: reads text in pages, pictures and PDFs in the background; `data/Recognized.kt` decides what needs reading (tested in `RecognizedTest`)
 - `reminders/Reminders.kt`: alarms, the notification and restoring after a restart; `data/ReminderTimes.kt` has the labels and quick choices (tested in `ReminderTest`); `ui/note/ReminderUi.kt` has the chip and pickers
+- `backup/Backup.kt`: backing up, automatic daily backups and restoring; `data/BackupZip.kt` is the zip format (tested in `BackupTest`); `ui/backup/BackupScreen.kt` is the screen
 - `data/Rich.kt`: formatting ranges and how they move while typing (tested in `RichTest`)
 - `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
 - `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt

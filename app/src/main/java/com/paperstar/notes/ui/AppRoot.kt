@@ -40,6 +40,7 @@ sealed interface Screen {
     data class Pen(val noteId: String, val page: Int) : Screen
     data class Picture(val noteId: String, val picId: String) : Screen
     data class File(val noteId: String, val fileId: String) : Screen
+    data object Backup : Screen
 }
 
 /** A tiny back stack: Home → Jar → Note → Pen / Picture / File. */
@@ -68,7 +69,9 @@ fun AppRoot(repo: Repository) {
     Box(Modifier.fillMaxSize().background(Paper.colors.bg)) {
         AnimatedContent(top, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { s ->
             when (s) {
-                Screen.Home -> HomeScreen(repo, data, drops, onOpenJar = { push(Screen.Jar(it)) }, onOpenNote = { push(Screen.Note(it)) })
+                Screen.Home -> HomeScreen(repo, data, drops, onOpenJar = { push(Screen.Jar(it)) }, onOpenNote = { push(Screen.Note(it)) },
+                    onOpenBackup = { push(Screen.Backup) })
+                Screen.Backup -> com.paperstar.notes.ui.backup.BackupScreen(repo, onBack = ::pop)
                 is Screen.Jar -> JarScreen(
                     repo, data, s.id, onBack = ::pop, onOpenNote = { push(Screen.Note(it)) },
                     // a pen note opens straight into the pen editor; Back returns to the note

@@ -70,6 +70,19 @@ class Repository(private val dir: File, private val scope: CoroutineScope) {
         }
     }
 
+    /** All notes as JSON, for a backup (#36). */
+    fun exportJson(): String = json.encodeToString(AppData.serializer(), _data.value)
+
+    /** Reads notes JSON from a backup. Throws if it isn't valid. */
+    fun parse(text: String): AppData = json.decodeFromString(AppData.serializer(), text)
+
+    /** Replaces everything with restored notes and saves right away. */
+    fun replaceAll(d: AppData) {
+        saveJob?.cancel()
+        _data.value = d
+        writeNow(d)
+    }
+
     private fun edit(fn: (AppData) -> AppData) {
         _data.update(fn)
         persist()

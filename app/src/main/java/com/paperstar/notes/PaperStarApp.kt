@@ -2,6 +2,7 @@ package com.paperstar.notes
 
 import android.app.Application
 import com.paperstar.notes.data.Repository
+import com.paperstar.notes.backup.Backup
 import com.paperstar.notes.ocr.Recognizer
 import com.paperstar.notes.reminders.Reminders
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -19,6 +20,7 @@ class PaperStarApp : Application() {
         super.onCreate()
         Recognizer(this, repo, appScope).start()
         Reminders.ensureChannel(this)
+        Backup.load(this)
         // Keep alarms in step with the notes whenever a reminder is added, changed or removed.
         appScope.launch {
             var scheduled = emptySet<String>()

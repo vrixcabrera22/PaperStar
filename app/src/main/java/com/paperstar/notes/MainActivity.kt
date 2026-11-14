@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.paperstar.notes.backup.Backup
 import com.paperstar.notes.reminders.Reminders
 import com.paperstar.notes.ui.AppRoot
 import com.paperstar.notes.ui.share.ShareInbox
@@ -34,5 +35,8 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         repo.flush()
+        // Daily automatic backup, when it's on and a backup place has been chosen.
+        val app = application as PaperStarApp
+        Backup.autoIfDue(this, repo, app.appScope)
     }
 }
