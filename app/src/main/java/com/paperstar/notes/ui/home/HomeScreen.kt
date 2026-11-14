@@ -127,14 +127,14 @@ fun HomeScreen(
             val terms = searchTerms(query)
             val hits = search(data, query)
             item(span = { GridItemSpan(maxLineSpan) }) {
-                if (hits.isEmpty()) EmptyBox("No notes match “${query.trim()}”.", "Search looks at titles, typed text, checklists, tags and jar names.")
+                if (hits.isEmpty()) EmptyBox("No notes match “${query.trim()}”.", "Search looks at titles, typed text, checklists, tags, jar names, files, and words in handwriting, pictures and PDFs.")
                 else Text("${plural(hits.size, "note")} found", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             items(hits, key = { it.note.id }, span = { GridItemSpan(maxLineSpan) }) { h ->
                 NoteCard(
                     h.note, onClick = { onOpenNote(h.note.id) },
                     jarLabel = h.folder.name to c.lids[h.folder.colorKey % c.lids.size],
-                    terms = terms, bodyText = snippet(h.note.body, terms),
+                    terms = terms, bodyText = h.foundIn ?: snippet(h.note.body, terms),
                 )
             }
         } else {

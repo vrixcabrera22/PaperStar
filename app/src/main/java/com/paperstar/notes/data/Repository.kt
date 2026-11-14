@@ -177,5 +177,12 @@ class Repository(private val dir: File, private val scope: CoroutineScope) {
         return first
     }
 
+    /** Saves text read from a page, picture or PDF (#24). It isn't an edit, so updatedAt stays. */
+    fun setRecognized(noteId: String, r: Recognized) = edit { d ->
+        d.copy(notes = d.notes.map { n ->
+            if (n.id != noteId) n else n.copy(recognized = pruneRecognized(n).filterNot { it.id == r.id } + r)
+        })
+    }
+
     fun consumeDrops(folderId: String) = _drops.update { it - folderId }
 }

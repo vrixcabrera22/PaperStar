@@ -43,6 +43,8 @@ data class Note(
     val pages: List<Page> = emptyList(),
     val pictures: List<Picture> = emptyList(),
     val files: List<Attachment> = emptyList(),
+    /** Text found in handwriting, pictures and PDFs, so search can find it (#24). */
+    val recognized: List<Recognized> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )

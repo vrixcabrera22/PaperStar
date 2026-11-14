@@ -1,13 +1,15 @@
 package com.paperstar.notes.data
 
-data class SearchHit(val note: Note, val folder: Folder)
+/** [foundIn] is set when the match was only in recognized text, like "Handwritten page: …the cell wall". */
+data class SearchHit(val note: Note, val folder: Folder, val foundIn: String? = null)
 
 fun searchTerms(query: String): List<String> =
     query.lowercase().split(Regex("\\s+")).map { it.removePrefix("#") }.filter { it.isNotBlank() }
 
 /**
- * Every term must appear somewhere in the note: title, typed text, checklist items,
- * tags or the jar's name. The Secret jar is never searched.
+ * Every term must appear somewhere in the note: title, typed text, checklist items, tags,
+ * file names, the jar's name, or text recognized in its handwriting, pictures and PDFs.
+ * The Secret jar is never searched.
  */
 fun search(data: AppData, query: String): List<SearchHit> {
     val terms = searchTerms(query)
@@ -21,7 +23,12 @@ fun search(data: AppData, query: String): List<SearchHit> {
             n.tags.forEach { append(it).append('\n') }
             n.files.forEach { append(it.name).append('\n') }
         }.lowercase()
-        if (terms.all { hay.contains(it) }) SearchHit(n, f) else null
+        val seen = n.recognized.joinToString("\n") { it.text }.lowercase()
+        if (!terms.all { hay.contains(it) || seen.contains(it) }) return@mapNotNull null
+        // Show where a recognized match came from, unless the typed text already shows it.
+        val inBody = terms.any { n.body.lowercase().contains(it) }
+        val rec = if (inBody) null else n.recognized.firstOrNull { r -> terms.any { r.text.lowercase().contains(it) } }
+        SearchHit(n, f, rec?.let { it.kind.label + ": " + snippet(it.text.replace('\n', ' '), terms) })
     }.sortedByDescending { it.note.updatedAt }
 }
 

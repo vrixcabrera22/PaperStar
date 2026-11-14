@@ -35,6 +35,11 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - A picture becomes a handwritten page with the picture behind it. The page takes the picture's shape, and the original picture stays as it was.
   - A PDF adds every page (up to 40) as pages to write on. Zoom into one page and tap **Write on page** to add only that page.
   - All pen tools work on top, including the highlighter and lasso. The pages show in the note's Handwritten section like any other page.
+- **Searching handwriting and photos (#24, version 0.7):** search also finds words in handwritten pages, pictures, scans and PDFs.
+  - Uses Google's ML Kit text recognition on the phone. Nothing is uploaded, and it works offline with no download.
+  - It reads things in the background a couple of seconds after you stop editing, and reads a page again only after it changes. PDFs are read up to 20 pages.
+  - Results say where the word was found, like "Handwritten page: …" or "Picture: …". Neat print reads best; messy cursive may not be found.
+  - The Secret jar is never read or searched.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -49,7 +54,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 4. ~~Fonts and bold, italic, highlight and colour (#2)~~ (done in versions 0.4 and 0.5)
 5. Secret jar: PIN or fingerprint, encryption
 6. **Reminders and due dates (#27)**
-7. **Searching handwriting and photos with ML Kit (#24)**
+7. ~~Searching handwriting and photos with ML Kit (#24)~~ (done in version 0.7)
 8. **Google Drive backup (#36)**, then release prep
 
 The storage may move to Room once search needs to scale and the Secret jar needs encryption.
@@ -73,6 +78,7 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `ui/home/`: jars grid, `JarArt` (drawing, drop and shake animations), search, lucky star, new jar dialog
 - `ui/jar/`: one jar's notes, tag filter, rename, recolour and delete
 - `ui/note/`: note editor (title, text, tags, checklist, pin); `RichText.kt` has the format bar and styled text
+- `ocr/Recognizer.kt`: reads text in pages, pictures and PDFs in the background; `data/Recognized.kt` decides what needs reading (tested in `RecognizedTest`)
 - `data/Rich.kt`: formatting ranges and how they move while typing (tested in `RichTest`)
 - `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
 - `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt
