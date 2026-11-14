@@ -62,6 +62,7 @@ import com.paperstar.notes.ui.PsIcon
 import com.paperstar.notes.ui.PsIcons
 import com.paperstar.notes.ui.TagChip
 import com.paperstar.notes.ui.theme.Paper
+import com.paperstar.notes.ui.theme.noteTextStyle
 import com.paperstar.notes.ui.whenText
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -82,6 +83,7 @@ fun NoteScreen(
     var title by remember(noteId) { mutableStateOf(note.title) }
     val rich = remember(noteId) { RichTextState(note.body, note.marks) }
     var bodyFocused by remember { mutableStateOf(false) }
+    var fontPicker by remember { mutableStateOf(false) }
     fun saveBody() = repo.updateNote(noteId) { n -> n.copy(body = rich.value.text, marks = rich.marks) }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -177,14 +179,19 @@ fun NoteScreen(
             NoteAttachments(repo, note, onOpenPicture, onOpenFile)
 
             // typed text
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                Text("Typed", style = MaterialTheme.typography.titleMedium, color = c.ink, modifier = Modifier.weight(1f))
+                FontChip(note.font, note.textSize) { fontPicker = true }
+            }
+            val bodyStyle = noteTextStyle(MaterialTheme.typography.bodyLarge.copy(color = c.ink), note.font, note.textSize)
             Box(
                 Modifier.fillMaxWidth().heightIn(min = 120.dp).clip(RoundedCornerShape(14.dp)).background(c.surface)
                     .border(1.dp, c.line, RoundedCornerShape(14.dp)).padding(14.dp),
             ) {
-                if (rich.value.text.isEmpty()) Text("Type here…", style = MaterialTheme.typography.bodyLarge, color = c.muted)
+                if (rich.value.text.isEmpty()) Text("Type here…", style = bodyStyle.copy(color = c.muted))
                 BasicTextField(
                     rich.value, { if (rich.onValueChange(it)) saveBody() },
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.ink),
+                    textStyle = bodyStyle,
                     visualTransformation = MarksTransformation(rich.marks, textColors()),
                     cursorBrush = SolidColor(c.accent),
                     modifier = Modifier.fillMaxWidth().onFocusChanged { bodyFocused = it.isFocused },
@@ -209,7 +216,7 @@ fun NoteScreen(
             }
             Spacer(Modifier.size(40.dp))
         }
-        if (bodyFocused) FormatBar(rich, ::saveBody, Modifier.navigationBarsPadding())
+        if (bodyFocused) FormatBar(rich, ::saveBody, onFont = { fontPicker = true }, modifier = Modifier.navigationBarsPadding())
     }
 
     if (addingTag) {
@@ -240,6 +247,12 @@ fun NoteScreen(
             dismissButton = { TextButton(onClick = { addingTag = false }) { Text("Cancel") } },
         )
     }
+    if (fontPicker) FontPickerDialog(
+        note.font, note.textSize,
+        onFont = { k -> repo.updateNote(noteId) { n -> n.copy(font = k) } },
+        onSize = { sz -> repo.updateNote(noteId) { n -> n.copy(textSize = sz) } },
+        onDismiss = { fontPicker = false },
+    )
     if (confirmDelete) AlertDialog(
         onDismissRequest = { confirmDelete = false },
         title = { Text("Delete “${note.title.ifBlank { "Untitled" }}”?") },

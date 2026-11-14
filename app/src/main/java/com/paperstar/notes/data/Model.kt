@@ -31,6 +31,10 @@ data class Note(
     val body: String = "",
     /** Bold, italic, highlight and colour ranges in [body]. */
     val marks: List<Mark> = emptyList(),
+    /** Font for the typed text ("" is the app's normal font). See NoteFonts. */
+    val font: String = "",
+    /** Typed text size: 0 small, 1 medium, 2 large. */
+    val textSize: Int = 1,
     val checklist: List<CheckItem> = emptyList(),
     /** Stored lowercase, without the leading '#'. */
     val tags: List<String> = emptyList(),

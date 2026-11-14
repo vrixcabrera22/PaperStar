@@ -196,7 +196,8 @@ fun HomeScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(n.title.ifBlank { "Untitled" }, fontWeight = FontWeight.Bold, color = c.ink)
-                    if (n.body.isNotBlank()) Text(n.body, maxLines = 4, color = c.muted)
+                    if (n.body.isNotBlank()) Text(n.body, maxLines = 4, color = c.muted,
+                        style = com.paperstar.notes.ui.theme.previewTextStyle(MaterialTheme.typography.bodyMedium, n.font))
                 }
             },
             confirmButton = { TextButton(onClick = { lucky = null; onOpenNote(n.id) }) { Text("Open note") } },

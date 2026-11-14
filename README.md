@@ -30,6 +30,7 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - Select words and tap **B**, **I** or **U**, the highlighter (yellow, pink, green or blue) or **A** for text colour (red, blue, green, purple or orange).
   - With nothing selected, a button sets the style for the next letters typed. Typing right after a styled word continues its style, like in Google Docs.
   - Highlights keep dark text in dark mode, and text colours switch to lighter shades. Styles are saved as ranges next to the plain text, so search and old notes are unchanged.
+- **Fonts (version 0.5):** tap the **Aa** chip above the typed text, or **Aa** on the format bar. Pick one of 8 bundled Google Fonts (DM Sans, Nunito, Lora, Caveat, Patrick Hand, Bricolage Grotesque, Courier Prime, Comfortaa) or Default, plus Small, Medium or Large. Each name is shown in its own font. The choice is saved per note and shows on note cards. Fonts work offline; their licenses are in [`licenses/FONTS-OFL.txt`](licenses/FONTS-OFL.txt).
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -41,7 +42,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 1. ~~Pen editor with lasso~~ (done in version 0.2). A possible later upgrade is the Jetpack Ink library for even lower stylus delay.
 2. ~~Pictures, files, scanner, gallery cleanup, sharing in~~ (done in version 0.3). Still to do: a jar-wide Pictures tab.
 3. **Writing on pictures and PDFs (#11)**
-4. Fonts (one per note, with small/medium/large size). ~~Bold, italic, highlight and colour (#2)~~ (done in version 0.4)
+4. ~~Fonts and bold, italic, highlight and colour (#2)~~ (done in versions 0.4 and 0.5)
 5. Secret jar: PIN or fingerprint, encryption
 6. **Reminders and due dates (#27)**
 7. **Searching handwriting and photos with ML Kit (#24)**
@@ -75,4 +76,5 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `data/Imports.kt`: copies pictures and files into app storage
 - `ui/pen/`: pen editor (`PenScreen` handles gestures and zoom, `PenState` handles tools, lasso and undo, `PageRender` draws paper, ink and page previews)
 - `data/Ink.kt`: strokes, pages and the lasso, eraser and move/resize math (tested in `InkTest`)
-- `ui/theme/`: colours from the prototype
+- `ui/theme/`: colours from the prototype; `Fonts.kt` has the note fonts and sizes
+- `ui/note/FontPicker.kt`: the font chip and picker

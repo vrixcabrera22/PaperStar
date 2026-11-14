@@ -145,7 +145,7 @@ class RichTextState(text: String, marks: List<Mark>) {
 
 /** The formatting bar shown above the keyboard while typing (#2). */
 @Composable
-fun FormatBar(state: RichTextState, onChange: () -> Unit, modifier: Modifier = Modifier) {
+fun FormatBar(state: RichTextState, onChange: () -> Unit, onFont: () -> Unit, modifier: Modifier = Modifier) {
     val c = Paper.colors
     var palette by remember { mutableStateOf<MarkType?>(null) }
     val colors = textColors()
@@ -194,6 +194,9 @@ fun FormatBar(state: RichTextState, onChange: () -> Unit, modifier: Modifier = M
                 Text("U", color = it, style = MaterialTheme.typography.titleMedium.copy(textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Medium))
             }
             Box(Modifier.width(1.dp).height(24.dp).background(c.line))
+            FormatButton("Font and size", false, { palette = null; onFont() }) {
+                Text("Aa", color = it, style = MaterialTheme.typography.titleMedium)
+            }
             val hl = if (state.isOn(MarkType.HIGHLIGHT)) state.colorOf(MarkType.HIGHLIGHT) else null
             FormatButton("Highlight", hl != null || palette == MarkType.HIGHLIGHT,
                 { palette = if (palette == MarkType.HIGHLIGHT) null else MarkType.HIGHLIGHT }) { tint ->

@@ -105,7 +105,8 @@ fun NoteCard(
             Text(highlighted(note.title.ifBlank { "Untitled" }, terms, c.highlight), style = MaterialTheme.typography.titleMedium,
                 color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        if (bodyText.isNotBlank()) Text(highlighted(bodyText, terms, c.highlight), style = MaterialTheme.typography.bodyMedium,
+        if (bodyText.isNotBlank()) Text(highlighted(bodyText, terms, c.highlight),
+            style = com.paperstar.notes.ui.theme.previewTextStyle(MaterialTheme.typography.bodyMedium, note.font),
             color = c.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         if (note.pages.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             note.pages.take(4).forEach { p ->
