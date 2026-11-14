@@ -71,8 +71,11 @@ fun AppRoot(repo: Repository) {
                     onOpenFile = { push(Screen.File(s.id, it)) },
                 )
                 is Screen.Pen -> PenScreen(repo, data, s.noteId, s.page, onDone = ::pop)
-                is Screen.Picture -> PictureViewer(repo, data, s.noteId, s.picId, onBack = ::pop)
-                is Screen.File -> FileViewer(repo, data, s.noteId, s.fileId, onBack = ::pop)
+                // "Write on it" swaps the viewer for the pen editor; Done then returns to the note
+                is Screen.Picture -> PictureViewer(repo, data, s.noteId, s.picId, onBack = ::pop,
+                    onWriteOn = { page -> pop(); push(Screen.Pen(s.noteId, page)) })
+                is Screen.File -> FileViewer(repo, data, s.noteId, s.fileId, onBack = ::pop,
+                    onWriteOn = { page -> pop(); push(Screen.Pen(s.noteId, page)) })
             }
         }
     }

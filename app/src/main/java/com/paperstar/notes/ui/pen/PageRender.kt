@@ -6,6 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
+import com.paperstar.notes.ui.media.rememberPicture
+import java.io.File
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -26,20 +33,27 @@ private val MarginPink = Color(0xFFF0A3AE)
 private val GridBlue = Color(0xFFDCE4F2)
 const val HIGHLIGHT_ALPHA = .4f
 
-/** Draws the paper in page units (call inside a scale so 1 unit = 1 page unit). */
-fun DrawScope.drawPaper(paper: Paper) {
-    drawRect(PaperWhite, size = androidx.compose.ui.geometry.Size(PAGE_W, PAGE_H))
+/**
+ * Draws the paper in page units (call inside a scale so 1 unit = 1 page unit).
+ * A page with a picture behind it (#11) draws the picture instead of lines.
+ */
+fun DrawScope.drawPaper(paper: Paper, height: Float = PAGE_H, bg: ImageBitmap? = null, hasBg: Boolean = false) {
+    drawRect(PaperWhite, size = androidx.compose.ui.geometry.Size(PAGE_W, height))
+    if (hasBg) {
+        if (bg != null) drawImage(bg, dstSize = IntSize(PAGE_W.roundToInt(), height.roundToInt()), filterQuality = FilterQuality.High)
+        return
+    }
     when (paper) {
         Paper.LINED -> {
             var y = 160f
-            while (y < PAGE_H - 40f) { drawLine(RuleBlue, Offset(0f, y), Offset(PAGE_W, y), 1.6f); y += 56f }
-            drawLine(MarginPink, Offset(110f, 0f), Offset(110f, PAGE_H), 1.6f)
+            while (y < height - 40f) { drawLine(RuleBlue, Offset(0f, y), Offset(PAGE_W, y), 1.6f); y += 56f }
+            drawLine(MarginPink, Offset(110f, 0f), Offset(110f, height), 1.6f)
         }
         Paper.GRID -> {
             var v = 50f
-            while (v < PAGE_W) { drawLine(GridBlue, Offset(v, 0f), Offset(v, PAGE_H), 1.6f); v += 50f }
+            while (v < PAGE_W) { drawLine(GridBlue, Offset(v, 0f), Offset(v, height), 1.6f); v += 50f }
             v = 50f
-            while (v < PAGE_H) { drawLine(GridBlue, Offset(0f, v), Offset(PAGE_W, v), 1.6f); v += 50f }
+            while (v < height) { drawLine(GridBlue, Offset(0f, v), Offset(PAGE_W, v), 1.6f); v += 50f }
         }
         Paper.BLANK -> Unit
     }
@@ -83,9 +97,10 @@ fun DrawScope.drawStrokes(strokes: List<Stroke>, skip: Set<String> = emptySet())
 /** A small preview of a handwritten page. */
 @Composable
 fun PageThumb(page: Page, modifier: Modifier = Modifier) {
-    Canvas(modifier.aspectRatio(PAGE_W / PAGE_H)) {
+    val bg = page.bg?.let { rememberPicture(File(LocalContext.current.filesDir, it), 400) }
+    Canvas(modifier.aspectRatio(PAGE_W / page.height)) {
         scale(size.width / PAGE_W, pivot = Offset.Zero) {
-            drawPaper(page.paper)
+            drawPaper(page.paper, page.height, bg, page.bg != null)
             drawStrokes(page.strokes)
         }
     }

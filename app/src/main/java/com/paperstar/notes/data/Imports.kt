@@ -55,6 +55,34 @@ object Imports {
             }
         }
 
+    const val PAGE_BGS = "page-backgrounds"
+
+    /** Saves a picture to write on (#11) and returns where it went and the page height to use. */
+    suspend fun saveBackground(ctx: Context, bmp: Bitmap): PageBackground? = withContext(Dispatchers.IO) {
+        try {
+            val rel = "$PAGE_BGS/${newId()}.jpg"
+            val out = File(ctx.filesDir, rel).apply { parentFile?.mkdirs() }
+            out.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            PageBackground(rel, pageHeightFor(bmp.width, bmp.height))
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** Copies a saved picture so it can be written on without changing the original. */
+    suspend fun backgroundFromPicture(ctx: Context, src: File): PageBackground? = withContext(Dispatchers.IO) {
+        try {
+            val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(src.path, o)
+            if (o.outWidth <= 0) return@withContext null
+            val rel = "$PAGE_BGS/${newId()}.jpg"
+            src.copyTo(File(ctx.filesDir, rel).apply { parentFile?.mkdirs() })
+            PageBackground(rel, pageHeightFor(o.outWidth, o.outHeight))
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     /** Copies any file as-is, keeping its name and type. */
     suspend fun file(ctx: Context, uri: Uri, fallbackName: String = "File"): Attachment? = withContext(Dispatchers.IO) {
         try {

@@ -92,7 +92,7 @@ class Repository(private val dir: File, private val scope: CoroutineScope) {
 
     /** Deletes the picture and attachment files that belong to these notes. */
     private fun removeFilesOf(notes: List<Note>) {
-        val paths = notes.flatMap { n -> n.pictures.map { it.path } + n.files.map { it.path } }
+        val paths = notes.flatMap { n -> n.pictures.map { it.path } + n.files.map { it.path } + n.pages.mapNotNull { it.bg } }
         if (paths.isEmpty()) return
         scope.launch(Dispatchers.IO) { paths.forEach { File(dir, it).delete() } }
     }
@@ -161,8 +161,21 @@ class Repository(private val dir: File, private val scope: CoroutineScope) {
     fun updatePage(noteId: String, pageId: String, fn: (Page) -> Page) =
         updateNote(noteId) { n -> n.copy(pages = n.pages.map { if (it.id == pageId) fn(it) else it }) }
 
-    fun deletePage(noteId: String, pageId: String) =
+    fun deletePage(noteId: String, pageId: String) {
+        val bg = _data.value.note(noteId)?.pages?.firstOrNull { it.id == pageId }?.bg
         updateNote(noteId) { n -> n.copy(pages = n.pages.filterNot { it.id == pageId }) }
+        if (bg != null) scope.launch(Dispatchers.IO) { File(dir, bg).delete() }
+    }
+
+    /** Adds pages to write on, each with a picture behind it (#11). Returns the index of the first one. */
+    fun addPicturePages(noteId: String, bgs: List<PageBackground>): Int {
+        var first = 0
+        updateNote(noteId) { n ->
+            first = n.pages.size
+            n.copy(pages = n.pages + bgs.map { Page(paper = Paper.BLANK, height = it.height, bg = it.path) })
+        }
+        return first
+    }
 
     fun consumeDrops(folderId: String) = _drops.update { it - folderId }
 }

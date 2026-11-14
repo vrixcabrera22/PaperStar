@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.paperstar.notes.data.AppData
 import com.paperstar.notes.data.InkTool
-import com.paperstar.notes.data.PAGE_H
+import com.paperstar.notes.ui.media.rememberPicture
 import com.paperstar.notes.data.PAGE_W
 import com.paperstar.notes.data.Paper
 import com.paperstar.notes.data.Repository
@@ -85,6 +85,7 @@ fun PenScreen(repo: Repository, data: AppData, noteId: String, startPage: Int, o
     val state = remember(noteId) { PenState { s -> repo.updatePage(noteId, pageIdNow.value) { it.copy(strokes = s) } } }
     LaunchedEffect(page.id) { state.resetForPage() }
     var deleteArmed by remember(page.id) { mutableStateOf(false) }
+    val bgImg = page.bg?.let { rememberPicture(repo.fileOf(it), 2400) }
 
     Column(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
         // ---- top bar ----
@@ -108,8 +109,8 @@ fun PenScreen(repo: Repository, data: AppData, noteId: String, startPage: Int, o
             val pad = with(density) { 12.dp.toPx() }
             val availW = constraints.maxWidth - pad * 2
             val availH = constraints.maxHeight - pad * 2
-            val fitW = minOf(availW, availH * PAGE_W / PAGE_H)
-            val fitH = fitW * PAGE_H / PAGE_W
+            val fitW = minOf(availW, availH * PAGE_W / page.height)
+            val fitH = fitW * page.height / PAGE_W
             val ox = (constraints.maxWidth - fitW) / 2
             val oy = (constraints.maxHeight - fitH) / 2
             val k = fitW / PAGE_W
@@ -179,7 +180,7 @@ fun PenScreen(repo: Repository, data: AppData, noteId: String, startPage: Int, o
                     // finished strokes: only redraws when the page changes
                     val skip = state.selection
                     Canvas(Modifier.fillMaxSize()) {
-                        scale(k, pivot = Offset.Zero) { drawPaper(page.paper); drawStrokes(page.strokes, skip) }
+                        scale(k, pivot = Offset.Zero) { drawPaper(page.paper, page.height, bgImg, page.bg != null); drawStrokes(page.strokes, skip) }
                     }
                     // live layer: the stroke being drawn, the lasso, the selection
                     Canvas(Modifier.fillMaxSize()) {
@@ -271,11 +272,12 @@ fun PenScreen(repo: Repository, data: AppData, noteId: String, startPage: Int, o
                 }
             }
             if (!selecting) ToolGroup {
-                TextTool(when (page.paper) { Paper.LINED -> "Lined"; Paper.GRID -> "Grid"; Paper.BLANK -> "Blank" }) {
+                // a page with a picture behind it has no paper style to change
+                if (page.bg == null) TextTool(when (page.paper) { Paper.LINED -> "Lined"; Paper.GRID -> "Grid"; Paper.BLANK -> "Blank" }) {
                     val next = Paper.entries[(page.paper.ordinal + 1) % Paper.entries.size]
                     repo.updatePage(noteId, page.id) { it.copy(paper = next) }
                 }
-                TextTool("+ Page") { index = repo.insertPage(noteId, index, page.paper) }
+                TextTool("+ Page") { index = repo.insertPage(noteId, index, if (page.bg != null) Paper.LINED else page.paper) }
                 if (deleteArmed) TextTool("Delete?", danger = true) {
                     deleteArmed = false
                     if (note.pages.size == 1) { repo.deletePage(noteId, page.id); onDone() }

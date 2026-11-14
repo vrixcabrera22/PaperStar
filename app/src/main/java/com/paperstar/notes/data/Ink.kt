@@ -66,7 +66,15 @@ data class Page(
     val id: String = newId(),
     val paper: Paper = Paper.LINED,
     val strokes: List<Stroke> = emptyList(),
+    /** Page height in page units. Plain pages are A4; picture and PDF pages take the picture's shape. */
+    val height: Float = PAGE_H,
+    /** A picture to write on (#11), relative to the files folder. Null for plain paper. */
+    val bg: String? = null,
 )
+
+/** The height of a 1000-unit-wide page for a picture of [w] x [h] pixels, kept within sensible limits. */
+fun pageHeightFor(w: Int, h: Int): Float =
+    if (w <= 0 || h <= 0) PAGE_H else (PAGE_W * h / w).coerceIn(PAGE_W / 4, PAGE_W * 4)
 
 data class Bounds(val left: Float, val top: Float, val right: Float, val bottom: Float) {
     val width get() = right - left
@@ -132,3 +140,6 @@ fun lassoSelect(strokes: List<Stroke>, poly: List<Float>): Set<String> =
         val inside = (0 until s.count).count { pointInPolygon(s.x(it), s.y(it), poly) }
         s.count > 0 && inside * 2 >= s.count
     }.map { it.id }.toSet()
+
+/** A saved picture to put behind a page, and the page height that fits it. */
+data class PageBackground(val path: String, val height: Float)

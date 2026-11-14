@@ -1,6 +1,9 @@
 package com.paperstar.notes
 
+import com.paperstar.notes.data.PAGE_H
+import com.paperstar.notes.data.Page
 import com.paperstar.notes.data.Stroke
+import com.paperstar.notes.data.pageHeightFor
 import com.paperstar.notes.data.boundsOf
 import com.paperstar.notes.data.lassoSelect
 import com.paperstar.notes.data.pointInPolygon
@@ -55,5 +58,13 @@ class InkTest {
         val s = line("a", 100f, 100f)
         assertTrue(s.hits(110f, 100f, 9f))
         assertFalse(s.hits(130f, 100f, 9f))
+    }
+
+    @Test fun picturePagesTakeThePictureShape() {
+        assertEquals(750f, pageHeightFor(4000, 3000), .01f) // landscape photo
+        assertEquals(2000f, pageHeightFor(1000, 2000), .01f) // tall screenshot
+        assertEquals(4000f, pageHeightFor(100, 10000), .01f) // very long: capped
+        assertEquals(PAGE_H, pageHeightFor(0, 0), .01f) // unreadable: A4
+        assertEquals(PAGE_H, Page().height, .01f) // old pages stay A4
     }
 }

@@ -31,6 +31,10 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - With nothing selected, a button sets the style for the next letters typed. Typing right after a styled word continues its style, like in Google Docs.
   - Highlights keep dark text in dark mode, and text colours switch to lighter shades. Styles are saved as ranges next to the plain text, so search and old notes are unchanged.
 - **Fonts (version 0.5):** tap the **Aa** chip above the typed text, or **Aa** on the format bar. Pick one of 8 bundled Google Fonts (DM Sans, Nunito, Lora, Caveat, Patrick Hand, Bricolage Grotesque, Courier Prime, Comfortaa) or Default, plus Small, Medium or Large. Each name is shown in its own font. The choice is saved per note and shows on note cards. Fonts work offline; their licenses are in [`licenses/FONTS-OFL.txt`](licenses/FONTS-OFL.txt).
+- **Writing on pictures and PDFs (#11, version 0.6):** open a picture or PDF in a note and tap **Write on it**.
+  - A picture becomes a handwritten page with the picture behind it. The page takes the picture's shape, and the original picture stays as it was.
+  - A PDF adds every page (up to 40) as pages to write on. Zoom into one page and tap **Write on page** to add only that page.
+  - All pen tools work on top, including the highlighter and lasso. The pages show in the note's Handwritten section like any other page.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -41,7 +45,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 
 1. ~~Pen editor with lasso~~ (done in version 0.2). A possible later upgrade is the Jetpack Ink library for even lower stylus delay.
 2. ~~Pictures, files, scanner, gallery cleanup, sharing in~~ (done in version 0.3). Still to do: a jar-wide Pictures tab.
-3. **Writing on pictures and PDFs (#11)**
+3. ~~Writing on pictures and PDFs (#11)~~ (done in version 0.6)
 4. ~~Fonts and bold, italic, highlight and colour (#2)~~ (done in versions 0.4 and 0.5)
 5. Secret jar: PIN or fingerprint, encryption
 6. **Reminders and due dates (#27)**

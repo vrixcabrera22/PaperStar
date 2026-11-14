@@ -80,6 +80,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import com.paperstar.notes.data.PageBackground
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 // ---------- loading saved pictures ----------
 
@@ -141,14 +144,28 @@ fun ZoomBox(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 // ---------- picture viewer ----------
 
 @Composable
-fun PictureViewer(repo: Repository, data: AppData, noteId: String, picId: String, onBack: () -> Unit) {
+fun PictureViewer(repo: Repository, data: AppData, noteId: String, picId: String, onBack: () -> Unit, onWriteOn: (Int) -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     val note = data.note(noteId) ?: return
     val pic = note.pictures.firstOrNull { it.id == picId } ?: return
     var confirm by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf<String?>(null) }
     val density = LocalDensity.current
     // The viewer is always dark, like a photo app.
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0A10)).statusBarsPadding().navigationBarsPadding()) {
         ViewerBar(note.title.ifBlank { "Untitled" }, onBack) {
+            DarkButton("Write on it") {
+                if (busy == null) {
+                    busy = "Getting the picture ready…"
+                    scope.launch {
+                        val bg = Imports.backgroundFromPicture(ctx, repo.fileOf(pic.path))
+                        busy = null
+                        if (bg == null) Toast.makeText(ctx, "This picture couldn't be opened.", Toast.LENGTH_SHORT).show()
+                        else onWriteOn(repo.addPicturePages(noteId, listOf(bg)))
+                    }
+                }
+            }
             DarkButton("Remove") { confirm = true }
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
@@ -167,14 +184,17 @@ fun PictureViewer(repo: Repository, data: AppData, noteId: String, picId: String
         confirmButton = { TextButton(onClick = { confirm = false; onBack(); repo.removePicture(noteId, picId) }) { Text("Remove", color = Paper.colors.danger) } },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } },
     )
+    busy?.let { BusyDialog(it) }
 }
 
 // ---------- file viewer ----------
 
 /** PDFs open here, page by page. Tap a page to zoom into it. Other files go to another app. */
 @Composable
-fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, onBack: () -> Unit) {
+fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, onBack: () -> Unit, onWriteOn: (Int) -> Unit) {
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf<String?>(null) }
     val note = data.note(noteId) ?: return
     val att = note.files.firstOrNull { it.id == fileId } ?: return
     var confirm by remember { mutableStateOf(false) }
@@ -185,6 +205,31 @@ fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, 
 
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0A10)).statusBarsPadding().navigationBarsPadding()) {
         ViewerBar(att.name, onBack = { if (zoomPage != null) zoomPage = null else onBack() }) {
+            if (pdf != null) DarkButton(if (zoomPage != null) "Write on page" else "Write on it") {
+                if (busy == null) {
+                    // One zoomed page, or every page (up to a limit, so a whole textbook doesn't fill the phone).
+                    val single = zoomPage
+                    val pages = single?.let { listOf(it) } ?: (0 until minOf(pdf.pageCount, MAX_WRITE_PAGES)).toList()
+                    busy = "Getting the pages ready…"
+                    scope.launch {
+                        val bgs = mutableListOf<PageBackground>()
+                        for ((n, i) in pages.withIndex()) {
+                            busy = if (pages.size == 1) "Getting the page ready…" else "Getting page ${n + 1} of ${pages.size} ready…"
+                            val bmp = pdf.renderBitmap(i, PDF_WRITE_WIDTH) ?: continue
+                            Imports.saveBackground(ctx, bmp)?.let { bgs += it }
+                            bmp.recycle()
+                        }
+                        busy = null
+                        if (bgs.isEmpty()) {
+                            Toast.makeText(ctx, "The pages couldn't be opened.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            if (single == null && pdf.pageCount > MAX_WRITE_PAGES) Toast.makeText(ctx,
+                                "Added the first $MAX_WRITE_PAGES pages. Zoom into a later page and tap Write on page to add it.", Toast.LENGTH_LONG).show()
+                            onWriteOn(repo.addPicturePages(noteId, bgs))
+                        }
+                    }
+                }
+            }
             DarkButton("Open in…") { openExternally(ctx, att) }
             DarkButton("Remove") { confirm = true }
         }
@@ -227,7 +272,24 @@ fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, 
         confirmButton = { TextButton(onClick = { confirm = false; onBack(); repo.removeFile(noteId, fileId) }) { Text("Remove", color = Paper.colors.danger) } },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } },
     )
+    busy?.let { BusyDialog(it) }
 }
+
+private const val MAX_WRITE_PAGES = 40
+private const val PDF_WRITE_WIDTH = 1600
+
+/** A small "working on it" dialog that can't be dismissed. */
+@Composable
+private fun BusyDialog(text: String) = AlertDialog(
+    onDismissRequest = {},
+    text = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(Modifier.size(28.dp))
+            Text(text, modifier = Modifier.padding(start = 16.dp))
+        }
+    },
+    confirmButton = {},
+)
 
 /** Thin wrapper around Android's built-in PDF renderer. One page renders at a time. */
 private class PdfDoc(private val fd: ParcelFileDescriptor, private val r: PdfRenderer) {
@@ -236,15 +298,17 @@ private class PdfDoc(private val fd: ParcelFileDescriptor, private val r: PdfRen
     val pageCount get() = sizes.size
     fun aspect(i: Int) = sizes[i].first.toFloat() / sizes[i].second
 
-    suspend fun render(i: Int, widthPx: Int): ImageBitmap? = withContext(Dispatchers.IO) {
+    suspend fun render(i: Int, widthPx: Int): ImageBitmap? = renderBitmap(i, widthPx)?.asImageBitmap()
+
+    suspend fun renderBitmap(i: Int, widthPx: Int): Bitmap? = withContext(Dispatchers.IO) {
         lock.withLock {
             try {
                 r.openPage(i).use { p ->
                     val w = widthPx.coerceIn(200, 3000)
-                    val h = (w / aspect(i)).toInt()
+                    val h = (w / aspect(i)).toInt().coerceAtLeast(1)
                     val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).apply { eraseColor(AColor.WHITE) }
                     p.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    bmp.asImageBitmap()
+                    bmp
                 }
             } catch (e: Exception) {
                 null
