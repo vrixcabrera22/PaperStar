@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
@@ -79,7 +80,9 @@ fun NoteScreen(
     val jar = data.folder(note.folderId)
     // Local copies of the text so typing never fights with saving.
     var title by remember(noteId) { mutableStateOf(note.title) }
-    var body by remember(noteId) { mutableStateOf(note.body) }
+    val rich = remember(noteId) { RichTextState(note.body, note.marks) }
+    var bodyFocused by remember { mutableStateOf(false) }
+    fun saveBody() = repo.updateNote(noteId) { n -> n.copy(body = rich.value.text, marks = rich.marks) }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var addingTag by remember { mutableStateOf(false) }
@@ -108,7 +111,7 @@ fun NoteScreen(
         }
 
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
+            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box {
@@ -178,11 +181,13 @@ fun NoteScreen(
                 Modifier.fillMaxWidth().heightIn(min = 120.dp).clip(RoundedCornerShape(14.dp)).background(c.surface)
                     .border(1.dp, c.line, RoundedCornerShape(14.dp)).padding(14.dp),
             ) {
-                if (body.isEmpty()) Text("Type here…", style = MaterialTheme.typography.bodyLarge, color = c.muted)
+                if (rich.value.text.isEmpty()) Text("Type here…", style = MaterialTheme.typography.bodyLarge, color = c.muted)
                 BasicTextField(
-                    body, { body = it; repo.updateNote(noteId) { n -> n.copy(body = it) } },
+                    rich.value, { if (rich.onValueChange(it)) saveBody() },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.ink),
-                    cursorBrush = SolidColor(c.accent), modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = MarksTransformation(rich.marks, textColors()),
+                    cursorBrush = SolidColor(c.accent),
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { bodyFocused = it.isFocused },
                 )
             }
 
@@ -204,6 +209,7 @@ fun NoteScreen(
             }
             Spacer(Modifier.size(40.dp))
         }
+        if (bodyFocused) FormatBar(rich, ::saveBody, Modifier.navigationBarsPadding())
     }
 
     if (addingTag) {

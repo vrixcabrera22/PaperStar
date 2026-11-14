@@ -26,9 +26,13 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - **Files:** attach any file. PDFs open inside the app, with tap-a-page to zoom. Word, PowerPoint and other files open in an app on the phone ("Open in…").
   - **Share into Paper Star:** tap Share in another app (Messenger, Files, Gallery…), choose Paper Star, and pick a jar and a new or existing note. Shared text goes into the typed part.
   - File names are searchable. Deleting a note or jar also deletes its files.
+- **Bold, italic, underline, highlight and text colour (#2, version 0.4):** a format bar appears above the keyboard while typing.
+  - Select words and tap **B**, **I** or **U**, the highlighter (yellow, pink, green or blue) or **A** for text colour (red, blue, green, purple or orange).
+  - With nothing selected, a button sets the style for the next letters typed. Typing right after a styled word continues its style, like in Google Docs.
+  - Highlights keep dark text in dark mode, and text colours switch to lighter shades. Styles are saved as ranges next to the plain text, so search and old notes are unchanged.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
-- Unit tests for search, tags and sorting (`SearchTest`).
+- Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
 
 Data is saved as a single JSON file in the app's private storage, with atomic writes.
 
@@ -37,7 +41,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 1. ~~Pen editor with lasso~~ (done in version 0.2). A possible later upgrade is the Jetpack Ink library for even lower stylus delay.
 2. ~~Pictures, files, scanner, gallery cleanup, sharing in~~ (done in version 0.3). Still to do: a jar-wide Pictures tab.
 3. **Writing on pictures and PDFs (#11)**
-4. Fonts and **bold, italic, highlight and colour (#2)**
+4. Fonts (one per note, with small/medium/large size). ~~Bold, italic, highlight and colour (#2)~~ (done in version 0.4)
 5. Secret jar: PIN or fingerprint, encryption
 6. **Reminders and due dates (#27)**
 7. **Searching handwriting and photos with ML Kit (#24)**
@@ -63,7 +67,8 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `data/`: models (`Folder` = jar, `Note`, `CheckItem`), `Repository` (load, save, edits, star drops), `Search`, `Seed` examples
 - `ui/home/`: jars grid, `JarArt` (drawing, drop and shake animations), search, lucky star, new jar dialog
 - `ui/jar/`: one jar's notes, tag filter, rename, recolour and delete
-- `ui/note/`: note editor (title, text, tags, checklist, pin)
+- `ui/note/`: note editor (title, text, tags, checklist, pin); `RichText.kt` has the format bar and styled text
+- `data/Rich.kt`: formatting ranges and how they move while typing (tested in `RichTest`)
 - `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
 - `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt
 - `ui/share/`: "Save to Paper Star" from other apps

@@ -29,6 +29,8 @@ data class Note(
     val folderId: String,
     val title: String = "",
     val body: String = "",
+    /** Bold, italic, highlight and colour ranges in [body]. */
+    val marks: List<Mark> = emptyList(),
     val checklist: List<CheckItem> = emptyList(),
     /** Stored lowercase, without the leading '#'. */
     val tags: List<String> = emptyList(),
