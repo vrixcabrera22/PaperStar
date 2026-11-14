@@ -18,6 +18,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.paperstar.notes.data.Repository
+import com.paperstar.notes.reminders.Reminders
+import androidx.compose.runtime.LaunchedEffect
 import com.paperstar.notes.ui.home.HomeScreen
 import com.paperstar.notes.ui.jar.JarScreen
 import com.paperstar.notes.ui.media.FileViewer
@@ -54,6 +56,14 @@ fun AppRoot(repo: Repository) {
     fun pop() { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 
     BackHandler(enabled = stack.size > 1) { pop() }
+
+    // A tapped reminder opens its note, with its jar behind it for Back.
+    val remindNote by Reminders.openNote.collectAsState()
+    LaunchedEffect(remindNote) {
+        val n = remindNote?.let { data.note(it) } ?: return@LaunchedEffect
+        Reminders.openNote.value = null
+        stack.clear(); stack.add(Screen.Home); stack.add(Screen.Jar(n.folderId)); stack.add(Screen.Note(n.id))
+    }
 
     Box(Modifier.fillMaxSize().background(Paper.colors.bg)) {
         AnimatedContent(top, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { s ->

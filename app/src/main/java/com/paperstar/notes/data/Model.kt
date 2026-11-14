@@ -45,6 +45,8 @@ data class Note(
     val files: List<Attachment> = emptyList(),
     /** Text found in handwriting, pictures and PDFs, so search can find it (#24). */
     val recognized: List<Recognized> = emptyList(),
+    /** When to remind about this note (#27), in milliseconds, or null for no reminder. */
+    val remindAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )

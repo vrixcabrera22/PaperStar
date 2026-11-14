@@ -129,6 +129,7 @@ fun NoteScreen(
 
             // tags
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ReminderChip(repo, note)
                 note.tags.forEach { t -> TagChip(t, onRemove = { repo.updateNote(noteId) { n -> n.copy(tags = n.tags - t) } }) }
                 Row(
                     Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, c.line, RoundedCornerShape(999.dp))

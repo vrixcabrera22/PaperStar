@@ -133,6 +133,7 @@ fun NoteCard(
             Text("$done of ${note.checklist.size} done", style = MaterialTheme.typography.labelMedium,
                 color = if (done == note.checklist.size) c.accent else c.muted)
         }
+        note.remindAt?.let { com.paperstar.notes.ui.note.ReminderLine(it) }
         if (note.tags.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             note.tags.take(4).forEach { TagChip(it) }
         }

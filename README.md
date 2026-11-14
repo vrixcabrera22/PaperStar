@@ -40,6 +40,12 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - It reads things in the background a couple of seconds after you stop editing, and reads a page again only after it changes. PDFs are read up to 20 pages.
   - Results say where the word was found, like "Handwritten page: …" or "Picture: …". Neat print reads best; messy cursive may not be found.
   - The Secret jar is never read or searched.
+- **Reminders (#27, version 0.8):** tap **Remind me** on a note. Pick tonight at 8, tomorrow at 7 AM, Saturday at 9 AM, or any date and time.
+  - At that time a notification shows the note's title and first line. Tapping it opens the note.
+  - The note's chip and its card show when the reminder is due, then "Reminded …" afterwards. Tap the × to remove it.
+  - Reminders come back after the phone restarts. Android asks once for permission to show notifications.
+  - Notes in the Secret jar only say "A note in your Secret jar", so nothing shows on the lock screen.
+  - Android may deliver a reminder up to about a minute late, unless "Alarms & reminders" is allowed for Paper Star in Settings.
 - Light and dark mode, plus a jar app icon.
 - Example jars on first launch.
 - Unit tests for search, tags and sorting (`SearchTest`), ink (`InkTest`), files (`FilesTest`) and formatting (`RichTest`).
@@ -53,7 +59,7 @@ Data is saved as a single JSON file in the app's private storage, with atomic wr
 3. ~~Writing on pictures and PDFs (#11)~~ (done in version 0.6)
 4. ~~Fonts and bold, italic, highlight and colour (#2)~~ (done in versions 0.4 and 0.5)
 5. Secret jar: PIN or fingerprint, encryption
-6. **Reminders and due dates (#27)**
+6. ~~Reminders (#27)~~ (done in version 0.8)
 7. ~~Searching handwriting and photos with ML Kit (#24)~~ (done in version 0.7)
 8. **Google Drive backup (#36)**, then release prep
 
@@ -79,6 +85,7 @@ You can also open this `PaperStar` folder in Android Studio and press Run.
 - `ui/jar/`: one jar's notes, tag filter, rename, recolour and delete
 - `ui/note/`: note editor (title, text, tags, checklist, pin); `RichText.kt` has the format bar and styled text
 - `ocr/Recognizer.kt`: reads text in pages, pictures and PDFs in the background; `data/Recognized.kt` decides what needs reading (tested in `RecognizedTest`)
+- `reminders/Reminders.kt`: alarms, the notification and restoring after a restart; `data/ReminderTimes.kt` has the labels and quick choices (tested in `ReminderTest`); `ui/note/ReminderUi.kt` has the chip and pickers
 - `data/Rich.kt`: formatting ranges and how they move while typing (tested in `RichTest`)
 - `ui/media/`: saved-picture loading, picture viewer, PDF viewer, file rows, "Open in…"
 - `ui/note/Attachments.kt`: Pictures, Camera, Scan and File buttons, plus the gallery clean-up prompt
