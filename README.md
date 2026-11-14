@@ -24,6 +24,7 @@ The full plan is in [`../ANDROID_PLAN.md`](../ANDROID_PLAN.md). The clickable we
   - **Remove originals from the gallery (#17):** after you add pictures, the app offers to delete the originals, and Android asks you to confirm. Needs Android 11 or newer.
   - **Document scanner (#14):** uses Google's ML Kit scanner, which auto-crops and straightens. One page becomes a picture, and several pages become one PDF. Needs Google Play services, and it downloads a small part the first time.
   - **Files:** attach any file. PDFs open inside the app, with tap-a-page to zoom. Word, PowerPoint and other files open in an app on the phone ("Open in…").
+  - **Download:** tap the download arrow on a file, or in the PDF or picture viewer, to save a copy to the phone's **Downloads › Paper Star** folder. On Android 9 and older, Android's save screen opens instead.
   - **Share into Paper Star:** tap Share in another app (Messenger, Files, Gallery…), choose Paper Star, and pick a jar and a new or existing note. Shared text goes into the typed part.
   - File names are searchable. Deleting a note or jar also deletes its files.
 - **Bold, italic, underline, highlight and text colour (#2, version 0.4):** a format bar appears above the keyboard while typing.

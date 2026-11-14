@@ -151,6 +151,7 @@ fun PictureViewer(repo: Repository, data: AppData, noteId: String, picId: String
     val pic = note.pictures.firstOrNull { it.id == picId } ?: return
     var confirm by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf<String?>(null) }
+    val download = rememberDownloader()
     val density = LocalDensity.current
     // The viewer is always dark, like a photo app.
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0A10)).statusBarsPadding().navigationBarsPadding()) {
@@ -165,6 +166,10 @@ fun PictureViewer(repo: Repository, data: AppData, noteId: String, picId: String
                         else onWriteOn(repo.addPicturePages(noteId, listOf(bg)))
                     }
                 }
+            }
+            DarkIconButton(PsIcons.Download, "Download picture") {
+                val n = note.pictures.indexOfFirst { it.id == picId } + 1
+                download(Downloadable(repo.fileOf(pic.path), safeFileName(note.title.ifBlank { "Picture" }, " $n.jpg"), "image/jpeg"))
             }
             DarkButton("Remove") { confirm = true }
         }
@@ -201,6 +206,7 @@ fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, 
     var zoomPage by remember { mutableStateOf<Int?>(null) }
     val file = repo.fileOf(att.path)
     val pdf = remember(file.path) { PdfDoc.open(file) }
+    val download = rememberDownloader()
     DisposableEffect(pdf) { onDispose { pdf?.close() } }
 
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0A10)).statusBarsPadding().navigationBarsPadding()) {
@@ -230,6 +236,7 @@ fun FileViewer(repo: Repository, data: AppData, noteId: String, fileId: String, 
                     }
                 }
             }
+            DarkIconButton(PsIcons.Download, "Download ${att.name}") { download(Downloadable(file, att.name, att.mime)) }
             DarkButton("Open in…") { openExternally(ctx, att) }
             DarkButton("Remove") { confirm = true }
         }
@@ -354,7 +361,7 @@ private val kindColors = mapOf(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FileRow(att: Attachment, onOpen: () -> Unit, onRemove: () -> Unit) {
+fun FileRow(att: Attachment, onDownload: () -> Unit, onOpen: () -> Unit, onRemove: () -> Unit) {
     val c = Paper.colors
     val kind = kindOf(att.name, att.mime)
     Row(
@@ -372,6 +379,9 @@ fun FileRow(att: Attachment, onOpen: () -> Unit, onRemove: () -> Unit) {
             Text(sizeText(att.size) + if (kind == FileKind.PDF) " · opens here" else " · opens in another app",
                 color = c.muted, style = MaterialTheme.typography.bodySmall)
         }
+        Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onDownload), contentAlignment = Alignment.Center) {
+            PsIcon(PsIcons.Download, "Download ${att.name}", c.accent, Modifier.size(20.dp))
+        }
         Box(Modifier.size(36.dp).clip(CircleShape).clickable(onClick = onRemove), contentAlignment = Alignment.Center) {
             PsIcon(PsIcons.Close, "Remove ${att.name}", c.muted, Modifier.size(16.dp))
         }
@@ -387,6 +397,15 @@ private fun ViewerBar(title: String, onBack: () -> Unit, actions: @Composable ()
         Text(title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { actions() }
     }
+}
+
+@Composable
+private fun DarkIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, onClick: () -> Unit) {
+    Box(
+        Modifier.size(36.dp).clip(CircleShape).border(1.dp, Color(0x40FFFFFF), CircleShape)
+            .background(Color(0x14FFFFFF)).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { PsIcon(icon, desc, Color.White, Modifier.size(18.dp)) }
 }
 
 @Composable

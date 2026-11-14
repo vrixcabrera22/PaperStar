@@ -183,9 +183,11 @@ fun NoteAttachments(repo: Repository, note: Note, onOpenPicture: (String) -> Uni
         }
         if (note.files.isNotEmpty()) {
             SectionTitle("Files", "${note.files.size}")
+            val download = com.paperstar.notes.ui.media.rememberDownloader()
             note.files.forEach { f ->
                 FileRow(
                     f,
+                    onDownload = { download(com.paperstar.notes.ui.media.Downloadable(repo.fileOf(f.path), f.name, f.mime)) },
                     onOpen = { if (f.mime == "application/pdf" || f.name.endsWith(".pdf", true)) onOpenFile(f.id) else openExternally(ctx, f) },
                     onRemove = { removing = f },
                 )
